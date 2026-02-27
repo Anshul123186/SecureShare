@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SecureShare</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  </head>
+  <body>
+    <div class="app-shell">
+      <nav class="navbar">
+        <div class="nav-left">
+          <a href="{{ url_for('index') }}" class="brand brand-logo">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="SecureShare logo">
+          </a>
+        </div>
+        <div class="nav-center">
+          {% if current_user.is_authenticated %}
+            <div class="search-box">
+              <form method="get" action="{{ url_for('files.dashboard') }}">
+                <input type="text" name="q" placeholder="Search files" value="{{ request.args.get('q','') }}">
+              </form>
+            </div>
+          {% endif %}
+        </div>
+        <div class="nav-right">
+          {% if current_user.is_authenticated %}
+            <button class="nav-avatar" id="profileToggle" type="button" aria-label="Open profile">
+              <div class="avatar-circle">
+                {% set pid = (current_user.id or 0) %}
+                {% if pid % 3 == 0 %}
+                  🦊
+                {% elif pid % 3 == 1 %}
+                  🐼
+                {% else %}
+                  🤖
+                {% endif %}
+              </div>
+            </button>
+            <a href="{{ url_for('files.upload') }}" class="btn btn-primary">Upload</a>
+            {% if current_user.is_admin %}
+              <a href="{{ url_for('admin.dashboard') }}">Admin</a>
+            {% endif %}
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
+          {% else %}
+            <a href="{{ url_for('auth.login') }}">Login</a>
+            <a href="{{ url_for('auth.register') }}">Register</a>
+          {% endif %}
+        </div>
+      </nav>
+
+      <div class="app-body">
+        {% if current_user.is_authenticated %}
+          <aside class="sidebar">
+            <a href="{{ url_for('files.dashboard') }}" class="sidebar-link {% if request.args.get('view','all')=='all' %}active{% endif %}">Overview</a>
+            <a href="{{ url_for('files.dashboard', view='deleted') }}" class="sidebar-link {% if request.args.get('view')=='deleted' %}active{% endif %}">Deleted</a>
+            <a href="{{ url_for('files.dashboard') }}#shares" class="sidebar-link">Shared</a>
+          </aside>
+        {% endif %}
+
+        <main class="container">
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              <div class="flash-container">
+                {% for category, message in messages %}
+                  <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+              </div>
+            {% endif %}
+          {% endwith %}
+
+          {% block content %}{% endblock %}
+        </main>
+      </div>
+    </div>
+
+    {% if current_user.is_authenticated %}
+      <div class="profile-overlay" id="profileOverlay" hidden></div>
+      <div class="profile-panel" id="profilePanel" hidden>
+        <div class="profile-header">
+          <div class="avatar-circle large">
+            {% set pid = (current_user.id or 0) %}
+            {% if pid % 3 == 0 %}
+              🦊
+            {% elif pid % 3 == 1 %}
+              🐼
+            {% else %}
+              🤖
+            {% endif %}
+          </div>
+          <div>
+            <h3>{{ current_user.email }}</h3>
+            <p class="subtitle">Member since {{ current_user.created_at.strftime('%Y-%m-%d') }}</p>
+          </div>
+          <button type="button" class="btn btn-small btn-secondary profile-close" id="profileClose">Close</button>
+        </div>
+        <div class="profile-body">
+          <div class="profile-stat">
+            <span class="label">Total files</span>
+            <span class="value">{{ current_user.files|length }}</span>
+          </div>
+          <div class="profile-stat">
+            <span class="label">Starred</span>
+            <span class="value">{{ current_user.files|selectattr('is_starred')|list|length }}</span>
+          </div>
+        </div>
+      </div>
+      <script>
+        (function () {
+          const toggle = document.getElementById('profileToggle');
+          const panel = document.getElementById('profilePanel');
+          const overlay = document.getElementById('profileOverlay');
+          const closeBtn = document.getElementById('profileClose');
+          if (!toggle || !panel || !overlay || !closeBtn) return;
+          function openProfile() {
+            overlay.hidden = false;
+            panel.hidden = false;
+          }
+          function closeProfile() {
+            overlay.hidden = true;
+            panel.hidden = true;
+          }
+          toggle.addEventListener('click', openProfile);
+          closeBtn.addEventListener('click', closeProfile);
+          overlay.addEventListener('click', closeProfile);
+        })();
+      </script>
+    {% endif %}
+  </body>
+</html>
+

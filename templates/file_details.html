@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>File details</h2>
+  <div class="profile-cards">
+    <div class="card">
+      <h3>{{ file.original_filename }}</h3>
+      <p class="subtitle">Size: {{ (file.size_bytes / 1024) | round(2) }} KB</p>
+      <p class="subtitle">Uploaded: {{ file.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+      <div class="empty-actions">
+        <a href="{{ url_for('files.preview', file_id=file.id) }}" class="btn btn-primary">Preview</a>
+        <a href="{{ url_for('files.download', file_id=file.id) }}" class="btn btn-secondary">Download</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="profile-cards">
+    <div class="card" style="flex: 2;">
+      <h3>Comments</h3>
+      <form method="post">
+        {{ comment_form.hidden_tag() }}
+        <div class="form-group">
+          {{ comment_form.content(class="input") }}
+        </div>
+        {{ comment_form.submit(class="btn btn-primary") }}
+      </form>
+      <ul class="activity-list" style="margin-top: 1rem;">
+        {% for c in comments %}
+          <li>
+            <span class="activity-time">{{ c.created_at }}</span>
+            <strong>{{ c.user.email if c.user else 'User' }}</strong> – {{ c.content }}
+          </li>
+        {% else %}
+          <li>No comments yet.</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="card" style="flex: 1;">
+      <h3>Version history</h3>
+      <form method="post" action="{{ url_for('files.upload_version', file_id=file.id) }}" enctype="multipart/form-data">
+        {{ version_form.hidden_tag() }}
+        <div class="form-group">
+          {{ version_form.file(class="input") }}
+        </div>
+        {{ version_form.submit(class="btn btn-secondary btn-small") }}
+      </form>
+      <ul class="activity-list" style="margin-top: 1rem;">
+        {% for v in versions %}
+          <li>
+            <span class="activity-time">{{ v.created_at }}</span>
+            {{ (v.size_bytes / 1024) | round(2) }} KB
+            <form method="post" action="{{ url_for('files.restore_version', version_id=v.id) }}" style="display:inline;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-small" type="submit">Restore</button>
+            </form>
+          </li>
+        {% else %}
+          <li>Only the current version exists.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <h3>Activity</h3>
+  {% if activity %}
+    <ul class="activity-list">
+      {% for log in activity %}
+        <li>
+          <span class="activity-time">{{ log.created_at }}</span>
+          <span class="activity-type">{{ log.event_type }}</span> – {{ log.description }}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No activity yet for this file.</p>
+  {% endif %}
+{% endblock %}
+

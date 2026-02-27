@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>About Me</h2>
+  <div class="profile-cards">
+    <div class="card">
+      <h3>Account</h3>
+      <p><strong>Email:</strong> {{ current_user.email }}</p>
+      <p><strong>Member since:</strong> {{ current_user.created_at.strftime('%Y-%m-%d') }}</p>
+    </div>
+    <div class="card">
+      <h3>Storage</h3>
+      <p><strong>Total files:</strong> {{ total_files }}</p>
+      <p><strong>Used space:</strong> {{ (total_storage / (1024 * 1024)) | round(2) }} MB</p>
+    </div>
+  </div>
+
+  <h3>Recently added files</h3>
+  {% if recent_files %}
+    <ul>
+      {% for f in recent_files %}
+        <li>{{ f.original_filename }} – {{ f.created_at.strftime('%Y-%m-%d %H:%M') }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No files yet.</p>
+  {% endif %}
+{% endblock %}
+

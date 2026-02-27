@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Share File: {{ file.original_filename }}</h2>
+
+  <form method="post" class="form">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+      {{ form.target_email.label }}<br>
+      {{ form.target_email(class="input") }}
+      <small>Optional: restrict to a specific registered user.</small>
+      {% for error in form.target_email.errors %}
+        <div class="error">{{ error }}</div>
+      {% endfor %}
+    </div>
+    <div class="form-group">
+      {{ form.expires_at.label }}<br>
+      {{ form.expires_at(class="input") }}
+      <small>Optional: access will expire after this date/time.</small>
+      {% for error in form.expires_at.errors %}
+        <div class="error">{{ error }}</div>
+      {% endfor %}
+    </div>
+    <div class="form-group">
+      {{ form.max_downloads.label }}<br>
+      {{ form.max_downloads(class="input") }}
+      <small>Optional: maximum number of downloads.</small>
+      {% for error in form.max_downloads.errors %}
+        <div class="error">{{ error }}</div>
+      {% endfor %}
+    </div>
+    {{ form.submit(class="btn btn-primary") }}
+  </form>
+
+  {% if share_link %}
+    <div class="share-link">
+      <h3>Share Link</h3>
+      <code>{{ share_link }}</code>
+      <p>Send this link to the recipient. Access will be controlled by the options above.</p>
+    </div>
+  {% endif %}
+{% endblock %}
+

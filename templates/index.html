@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="hero hero-grid fade-in">
+    <div class="hero-copy">
+      <h1>SecureShare cloud storage</h1>
+      <p>Encrypted, auditable file sharing with a clean, Dropbox‑style dashboard.</p>
+      <div class="hero-actions">
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Get Started</a>
+        <a href="{{ url_for('auth.login') }}" class="btn btn-secondary">Login</a>
+      </div>
+    </div>
+    <div class="hero-graphic">
+      <div class="hero-card hero-card-main">
+        <div class="hero-card-row">
+          <span class="dot dot-blue"></span>
+          <span class="dot dot-green"></span>
+          <span class="dot dot-yellow"></span>
+        </div>
+        <div class="hero-card-body">
+          <div class="hero-file hero-file-large"></div>
+          <div class="hero-file hero-file-small"></div>
+        </div>
+      </div>
+      <div class="hero-card hero-card-float"></div>
+    </div>
+  </section>
+{% endblock %}
+

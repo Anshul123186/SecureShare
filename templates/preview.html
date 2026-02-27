@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Preview: {{ file.original_filename }}</h2>
+
+  {% if is_image %}
+    <div class="share-link">
+      <img src="{{ url_for('files.raw', file_id=file.id) }}" alt="{{ file.original_filename }}" style="max-width:100%; border-radius:0.5rem;">
+    </div>
+  {% elif is_pdf %}
+    <div class="share-link" style="height:70vh;">
+      <iframe src="{{ url_for('files.raw', file_id=file.id) }}" style="width:100%; height:100%; border:none;"></iframe>
+    </div>
+  {% elif text_preview %}
+    <div class="share-link" style="max-height:70vh; overflow:auto;">
+      <pre style="white-space:pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;">{{ text_preview }}</pre>
+    </div>
+  {% else %}
+    <p>Preview is not available for this file type. You can download it instead.</p>
+  {% endif %}
+
+  <p style="margin-top:1rem;">
+    <a href="{{ url_for('files.download', file_id=file.id) }}" class="btn btn-primary">Download</a>
+  </p>
+{% endblock %}
+

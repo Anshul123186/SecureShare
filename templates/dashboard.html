@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="files-header">
+    <div>
+      <h2>
+        {% if current_view == 'deleted' %}Deleted files{% else %}All files{% endif %}
+      </h2>
+      <p class="subtitle">Secure, encrypted storage solution for developers.</p>
+    </div>
+    <div class="files-header-actions">
+      <form method="post" action="{{ url_for('files.create_folder') }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="text" name="name" placeholder="New folder name" class="input small-input" autocomplete="off">
+        <button class="btn btn-small" type="submit">Create folder</button>
+      </form>
+    </div>
+  </div>
+
+  {% if current_view != 'deleted' %}
+    <div class="stats-row fade-in">
+      <div class="stat-card">
+        <div class="stat-icon">📂</div>
+        <div class="stat-content">
+          <span class="label">Total files</span>
+          <span class="value">{{ total_files }}</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💾</div>
+        <div class="stat-content">
+          <span class="label">Storage used</span>
+          <span class="value">{{ total_storage_mb | round(2) }} MB</span>
+          <div class="stat-bar">
+            {% set pct = (total_storage_mb / 1024 * 100) if total_storage_mb else 0 %}
+            <div class="stat-bar-fill" style="width: {{ pct if pct < 100 else 100 }}%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⭐</div>
+        <div class="stat-content">
+          <span class="label">Starred</span>
+          <span class="value">{{ starred_count }}</span>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if current_view != 'deleted' %}
+    <div class="mascot-tip fade-in">
+      <div class="mascot-avatar">
+        <div class="mascot-face">
+          <div class="mascot-eye left"></div>
+          <div class="mascot-eye right"></div>
+          <div class="mascot-mouth"></div>
+          <div class="mascot-cheek left"></div>
+          <div class="mascot-cheek right"></div>
+        </div>
+      </div>
+      <div class="mascot-text">
+        <strong>Welcome to SecureShare.</strong>
+        <span>Upload files, star favourites, and use preview to view them instantly.</span>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if folders %}
+    <div class="folder-row">
+      {% for folder in folders %}
+        <a href="{{ url_for('files.dashboard', view=current_view, folder=folder.id) }}" class="folder-card {% if current_folder_id == folder.id %}active{% endif %}">
+          <div class="folder-icon">📁</div>
+          <div class="folder-name">{{ folder.name }}</div>
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if current_view != 'deleted' %}
+    {% if starred_files %}
+      <h3>Starred files</h3>
+      <div class="folder-row">
+        {% for f in starred_files %}
+          <div class="folder-card">
+            <div class="folder-icon">★</div>
+            <div class="folder-name">{{ f.original_filename }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if recent_files %}
+      <h3>Recently opened</h3>
+      <div class="folder-row">
+        {% for f in recent_files %}
+          <div class="folder-card">
+            <div class="folder-icon">🕒</div>
+            <div class="folder-name">{{ f.original_filename }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endif %}
+
+  <div class="card section-card">
+    {% if files %}
+      <table class="table table-files fade-in">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Name</th>
+            <th>Size</th>
+            <th>Uploaded</th>
+            <th>Last opened</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in files %}
+            <tr>
+              <td class="icon-cell">
+                {% if f.mime_type and 'image' in f.mime_type %}
+                  🖼️
+                {% elif f.mime_type and 'pdf' in f.mime_type %}
+                  📕
+                {% elif f.is_starred %}
+                  ★
+                {% else %}
+                  📄
+                {% endif %}
+              </td>
+              <td>{{ f.original_filename }}</td>
+              <td>{{ (f.size_bytes / 1024) | round(2) }} KB</td>
+              <td>{{ f.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+              <td>
+                {% if f.last_accessed_at %}
+                  {{ f.last_accessed_at.strftime('%Y-%m-%d %H:%M') }}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+              <td>
+                {% if not f.is_deleted %}
+                  <a href="{{ url_for('files.download', file_id=f.id) }}" class="btn btn-small">Download</a>
+                  <a href="{{ url_for('files.preview', file_id=f.id) }}" class="btn btn-small">Preview</a>
+                  <a href="{{ url_for('files.details', file_id=f.id) }}" class="btn btn-small">Details</a>
+                  <a href="{{ url_for('files.share', file_id=f.id) }}" class="btn btn-small">Share</a>
+                  <form method="post" action="{{ url_for('files.toggle_star', file_id=f.id, view=current_view) }}" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-small" type="submit">
+                      {% if f.is_starred %}Unstar{% else %}Star{% endif %}
+                    </button>
+                  </form>
+                  <form method="post" action="{{ url_for('files.delete_file', file_id=f.id, view=current_view) }}" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-small btn-danger" type="submit">Delete</button>
+                  </form>
+                {% else %}
+                  <form method="post" action="{{ url_for('files.restore_file', file_id=f.id, view=current_view) }}" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-small" type="submit">Restore</button>
+                  </form>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state fade-in">
+        <div class="empty-copy">
+          <h3>No files here yet</h3>
+          <p>Start by uploading a file or creating a folder to organise your secure storage.</p>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="card section-card">
+    <h2 id="shares">Your Shares</h2>
+    {% if shares %}
+      <table class="table fade-in">
+        <thead>
+          <tr>
+            <th>File</th>
+            <th>Token</th>
+            <th>Expires</th>
+            <th>Downloads</th>
+            <th>Max</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in shares %}
+            <tr>
+              <td>{{ s.file.original_filename }}</td>
+              <td class="mono">{{ s.token[:10] }}…</td>
+              <td>
+                {% if s.expires_at %}
+                  {{ s.expires_at.strftime('%Y-%m-%d %H:%M') }}
+                {% else %}
+                  Never
+                {% endif %}
+              </td>
+              <td>{{ s.download_count }}</td>
+              <td>{{ s.max_downloads if s.max_downloads is not none else '-' }}</td>
+              <td>
+                {% if s.is_revoked %}
+                  Revoked
+                {% else %}
+                  Active
+                {% endif %}
+              </td>
+              <td>
+                {% if not s.is_revoked %}
+                  <form method="post" action="{{ url_for('files.revoke_share', share_id=s.id) }}" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-small btn-danger" type="submit">Revoke</button>
+                  </form>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>No active shares.</p>
+    {% endif %}
+  </div>
+
+  <div class="card section-card">
+    <h2>Recent activity</h2>
+    {% if recent_activity %}
+      <ul class="activity-list">
+        {% for log in recent_activity %}
+          <li>
+            <span class="activity-time">{{ log.created_at }}</span>
+            <span class="activity-type">{{ log.event_type }}</span> – {{ log.description }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No recent activity.</p>
+    {% endif %}
+  </div>
+{% endblock %}

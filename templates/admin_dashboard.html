@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Admin Dashboard</h2>
+
+  <h3>Users</h3>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>Admin</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+        <tr>
+          <td>{{ u.email }}</td>
+          <td>{{ "Yes" if u.is_admin else "No" }}</td>
+          <td>{{ u.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3>Recent Audit Logs</h3>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>User</th>
+        <th>IP</th>
+        <th>Event</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+        <tr>
+          <td>{{ log.created_at }}</td>
+          <td>{{ log.user.email if log.user else "-" }}</td>
+          <td>{{ log.ip_address }}</td>
+          <td>{{ log.event_type }}</td>
+          <td>{{ log.description }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
+
